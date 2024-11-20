@@ -2,17 +2,20 @@
 Lilly Steffen
 CS-230-05
 Boston Airbnb Dataset
-URL: [ ]
+URL: [ https://boston-airbnb-data-analysis-fh38jj7bepnpswchwrfhrn.streamlit.app ]
 Description:
 This program creates an interactive site for exploring Boston Airbnb data concerning
 price analysis, neighbourhood mapping, and property type comparisons.
 The program allows users to filter by price range, neighbourhood, and property
 type while providing visualizations such as maps and charts.
+
+* There will be an accompanying AI use document. At the end of that document it will
+contain a list of websites and YouTube videos I used as support to create this assignment
+
 """
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import pydeck as pdk
 
@@ -44,8 +47,8 @@ with tab1: # then under that first tab, Price Analysis, we can put this portion 
             "The default ranges are capped at 600 dollars.")
     st.text("Would you like to see listings above a value of 600 dollars? "
             "If checked the ranges will be updated to values that reflect all listing amounts.")
-    check = st.checkbox("Yes")
-    if check:
+    yes = st.checkbox("Yes")
+    if yes:
 
         # AI Assisted *Documented as AI Use 1       LEARN WHAT LINE 48/51 DOES
 
@@ -61,6 +64,11 @@ with tab1: # then under that first tab, Price Analysis, we can put this portion 
 
         # stores the filtered data so when the user selects a range the df will print out only the data in that range
         range = dflistings[dflistings['Price Bracket'] == selected_range]
+        # cut out all unnecessary columns
+        dflistings_shortened = range.drop(columns=['id', 'host_id', 'latitude', 'longitude', 'minimum_nights',
+                                                        'number_of_reviews', 'last_review', 'reviews_per_month',
+                                                        'calculated_host_listings_count', 'availability_365',
+                                                        'number_of_reviews_ltm', 'license'])
 
                 # check that there are values in that price range
                 # if range:
@@ -71,11 +79,11 @@ with tab1: # then under that first tab, Price Analysis, we can put this portion 
 
 
         # Originally tried the other way around but streamlit was unable to process it
-        if range.empty:   #The error of the earlier way to present the data was because you cant directly state that there is a value in the data frame. so this checks if the data frame is empty rather than containing something.
+        if dflistings_shortened.empty:   #The error of the earlier way to present the data was because you cant directly state that there is a value in the data frame. so this checks if the data frame is empty rather than containing something.
             st.write("There are no listings available in the selected price range.")
         else:
             st.write("These are the listings available in your selected price range:")
-            st.dataframe(range)
+            st.dataframe(dflistings_shortened)
 
 
     else:
@@ -88,63 +96,57 @@ with tab1: # then under that first tab, Price Analysis, we can put this portion 
         dflistings['Price Bracket'] = pd.cut(dflistings['price'], bins=bins, labels=labels, right=False)
         # sort listings by their price and then by their price bracket
         sorted_df_by_price = dflistings.sort_values(by="price", ascending=True)
-        sorted_df = dflistings[dflistings['Price Bracket'] == selected_range]
+        range = dflistings[dflistings['Price Bracket'] == selected_range]
+        dflistings_shortened = range.drop(columns=['id', 'host_id', 'latitude', 'longitude', 'minimum_nights',
+                                                        'number_of_reviews', 'last_review', 'reviews_per_month',
+                                                        'calculated_host_listings_count', 'availability_365',
+                                                        'number_of_reviews_ltm', 'license'])
 
 
-        if sorted_df.empty:   #The error of the earlier way to present the data was because you cant directly state that there is a value in the data frame. so this checks if the data frame is empty rather than containing something.
+        if dflistings_shortened.empty:   #The error of the earlier way to present the data was because you cant directly state that there is a value in the data frame. so this checks if the data frame is empty rather than containing something.
             st.write("There are no listings available in the selected price range.")
         else:
             st.write("These are the listings available in your selected price range:")
-            st.dataframe(sorted_df)
+            st.dataframe(dflistings_shortened)
+
 
 
     st.subheader(":red[Top 5 Most and Least Expensive Listings]", divider = 'grey')
+    dflistings_revised = dflistings.drop(columns=['id', 'host_id', 'latitude', 'longitude', 'minimum_nights',
+                                                        'number_of_reviews', 'last_review', 'reviews_per_month',
+                                                        'calculated_host_listings_count', 'availability_365',
+                                                        'number_of_reviews_ltm', 'license', 'Price Bracket'])
+
     # printing the top 5 most expensive listings
     st.text("The 5 Most Expensive Listings:")
-    top_5 = dflistings.nlargest(5, 'price')
+    top_5 = dflistings_revised.nlargest(5, 'price')
     st.write(top_5)
     # printing the lowest 5 listings
     st.text("The 5 Cheapest Listings:")
-    bottom_5 = dflistings.nsmallest(5, 'price')
+    bottom_5 = dflistings_revised.nsmallest(5, 'price')
     st.write(bottom_5)
 
 
 
 
     st.subheader(":red[Average Price of Listings by their Neighbourhood]", divider = 'grey')
-
-
-
-    # dflistings['price'] = pd.to_numeric(dflistings['price'], errors='coerce')
-    #
-    # # Convert 'neighbourhood' to string, just in case
-    # dflistings['neighbourhood'] = dflistings['neighbourhood'].astype(str)
-    #
-    # # Drop rows where 'price' is NaN
-    # dflistings = dflistings.dropna(subset=['price', 'neighbourhood'])
-    #
-    # # aveByCountry = df.groupby(by=['country']).mean()['perCapitaGDP'] , from week 11 in class
-    # avg_neighbourhood_price = dflistings.groupby(by=['neighbourhood']).mean()['price']
-    # avg_neighbourhood_price.plot(kind='bar', color='skyblue')
-    # plt.title("Average Price per Neighbourhood")
-    # plt.xlabel("Neighbourhood")
-    # plt.ylabel("Average Price")
-    #
-    # plt.show()
-    #
-    # print(dflistings['price'].dtype)
-    # print(dflistings['price'].head())
+    # markdown allows for more customization in the text than just using text. "_" makes the text italicised and "**" bolds text.
+    st.markdown("_Keep in mind **several** listings do not have a price available_")
+    # Create the chart
+    avg_price_neighbourhood = dflistings.groupby('neighbourhood')['price'].mean()
+    # print the chart
+    st.bar_chart(avg_price_neighbourhood, color = '#a0db8e')
 
 
 
 
 
     st.subheader(":red[Analysis of the Effect of the Price of the Listing and the Amount of Reviews Given per Month]", divider = 'grey')
-    st.text("There does not appear to be a clear relationship between the price of a listing and the number of reviews it receives.")
+    st.markdown("There **does not** appear to be a clear **relationship** between the price of a listing and the number of reviews it receives.")
 
     # creating the chart
     fig, ax = plt.subplots()
-    ax.scatter(x=dflistings['reviews_per_month'], y=dflistings['price'], s = 1)   # s=1 controls the size of the dots
+    ax.scatter(x=dflistings['reviews_per_month'], y=dflistings['price'], s = 2, c = '#915F6D', marker = '^')   # s=1 controls the size of the dots
 
     # Setting axis limits so we can zoom into the scatterplot and not have to include the outliers
     ax.set_xlim(0, 10)                  # The x-axis range is now from 0 to 15
@@ -152,7 +154,7 @@ with tab1: # then under that first tab, Price Analysis, we can put this portion 
 
     # Chart information
     ax.set_xlabel('Reviews per Month')
-    ax.set_ylabel('Price')
+    ax.set_ylabel('Price ($)')
     ax.set_title('Price vs Reviews')
 
     # show the plot in streamlit site
@@ -177,6 +179,11 @@ with tab2:
     )
 
     st.text("What neighbourhood would you like to view?")
+            # sliders for users to change the zoom and pinpoint levels on the map. Value is the initial point it will be set to
+            # the min and max values do just as they say creating a minimum and maximum for the slider and the step is how
+            # much the slider moves when shifting up or down
+    zoom_value = st.slider("How zoomed in would you like the map to be?", value = 12.5, min_value=10.0, max_value=15.0, step = 0.5)
+    dot_size = st.slider("Would you like to change the size of the pinpoints on the map?", value = 40.0, min_value=15.0, max_value=65.0, step = 5.0)
 
 
     # AI Assisted  *Documented as AI Use 2
@@ -208,7 +215,7 @@ with tab2:
         "ScatterplotLayer",
         neighbourhood_df,
         get_position=["longitude", "latitude"],
-        get_radius=40,                                  # Adjust the sizes of the circles on the map
+        get_radius=dot_size,                                  # Adjust the sizes of the circles on the map
         get_color="color",                              # assign the colors based on the listing's price bracket
         pickable=True,                                  # Enable hover functionality to see key details
         auto_highlight=True,                            # highlight the dots when hovered on
@@ -230,7 +237,7 @@ with tab2:
     view_state = pdk.ViewState(
         latitude=neighbourhood_df['latitude'].mean(),    # Centers the map based on the average latitude of the listings for the selected neighbourhood
         longitude=neighbourhood_df['longitude'].mean(),  # Centers the map based on average longitude of the listings for the selected neighbourhood
-        zoom=13,                                         # affects how zoomed in we are to the map
+        zoom=zoom_value,                                 # affects how zoomed in we are to the map
         pitch = 0                                        # affects the tilt of the map
     )
 
@@ -257,8 +264,13 @@ with tab3:
     selected_housing = st.selectbox("Select a Housing Type", options = ["Private room", "Entire home/apt",
                                                                               "Shared room", "Hotel room"])
     housing = dflistings[dflistings["room_type"] == selected_housing]
-    st.write(f"Showing listings for {selected_housing}:")
-    st.dataframe(housing)
+    st.write(f"{selected_housing} listings available in the Boston, MA area:")
+    dflistings_cutdown = housing.drop(columns=['id', 'host_id', 'latitude', 'longitude', 'minimum_nights',
+                                                  'number_of_reviews', 'last_review', 'reviews_per_month',
+                                                  'calculated_host_listings_count', 'availability_365',
+                                                  'number_of_reviews_ltm', 'license', 'Price Bracket',
+                                                  'price_bracket', 'color'])
+    st.dataframe(dflistings_cutdown)
 
     # Pie Chart to compare listing by their room type
     st.subheader(":red[Property Listings Pie Chart]", divider="grey")
@@ -271,14 +283,19 @@ with tab3:
     #Making the pie chart
     fig, ax = plt.subplots()
                 # the pie chart is for room  types, it will show the percentage of the pie and that label will be 1.15 points away from the center
-                # the colors anc explode values are assigned as well
-    ax.pie(room_types, autopct="%.1f%%", explode=explode, colors=colors, pctdistance=1.15)
+                # the colors and explode values are assigned as well. The start angle shifts the chart by 180 degrees.
+    ax.pie(room_types, autopct="%.1f%%", explode=explode, colors=colors, pctdistance=1.15, startangle=180)
 
     # pie chart legend
-        # the legend will be based on the room types variable and will have a tittle and will be placed in the upper right of the image
-    ax.legend(room_types.index, title="Room Types:", loc="upper right")
+        # the legend will be based on the room types variable. It will have a tittle and will be placed in the upper
+        # right of the image by using bbox_to_anchor to place the legend outside the chart to the upper right 
+    ax.legend(room_types.index, title="Room Types:", bbox_to_anchor=(1.25,1.15))
 
     # Display the plot in Streamlit
     st.pyplot(fig)
+
+
+
+
 
 
